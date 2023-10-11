@@ -44,7 +44,7 @@ kmap_matrix = np.zeros((row_size, col_size), dtype=int)
 dynamic_str = " ".join(gray_labels)
 
 # Ask for minterms
-minterms = list(map(int, input(f"Enter the minterms corresponding to {dynamic_str} separated by spaces: ").split()))
+minterms = list(map(int, input(f"Enter the values corresponding to {dynamic_str} separated by spaces: ").split()))
 
 # Populate K-Map matrix based on the minterms
 for idx, minterm in enumerate(minterms):
