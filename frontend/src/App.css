@@ -57,6 +57,7 @@
   display: flex !important;
   position: absolute !important;
   max-height: fit-content !important;
+  border-radius: 5px !important;
   margin: 0 !important;
   top: 50%;
   left: 50%;
@@ -65,6 +66,7 @@
 
 .MuiContainer-root > * {
   box-shadow: 0px 0px 2px 1px #aaaaaa !important;
+  border-radius: 5px !important;
   justify-content: center;
   width: fit-content;
   margin: 1em;
