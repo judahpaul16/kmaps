@@ -1,7 +1,10 @@
 import matplotlib.pyplot as plt
+from pathlib import Path
 import seaborn as sns
-import numpy as np
+import subprocess
 import math
+
+ROOT_DIRECTORY = Path(__file__).parent
 
 def gray_code(n):
     """Generate Gray code sequence of n bits."""
@@ -11,7 +14,7 @@ def gray_code(n):
     second_half = first_half[::-1]
     return ['0' + code for code in first_half] + ['1' + code for code in second_half]
 
-def plot_kmap(kmap_matrix, row_labels, col_labels, vars):
+async def plot_kmap(kmap_matrix, row_labels, col_labels, vars):
     """Plot the K-Map using Seaborn's heatmap."""
     num_vars = len(vars)
     plt.figure(figsize=(8, 6))
@@ -28,37 +31,6 @@ def plot_kmap(kmap_matrix, row_labels, col_labels, vars):
     # plt.show()
 
     # Output to image
-    plt.savefig("kmap.png", dpi=300)
+    plt.savefig(ROOT_DIRECTORY / "frontend" / "build" / "kmap.png", dpi=300)
 
-# Get variables and determine the number of variables
-vars = input("Enter the variables separated by spaces (e.g. 'A, B, C, D' or 'x, y, z'): ").split()
-num_vars = len(vars)
 
-# Generate Gray code labels for minterm inputs
-gray_labels = gray_code(num_vars)
-
-# Determine the dimensions of the K-Map
-row_size = 2**(math.ceil(num_vars / 2))
-col_size = 2**(math.floor(num_vars / 2))
-
-# Initialize K-Map matrix with zeros
-kmap_matrix = np.zeros((row_size, col_size), dtype=int)
-
-# Generate the dynamic string for minterm input
-dynamic_str = " ".join(gray_labels)
-
-# Ask for minterms
-minterms = list(map(int, input(f"Enter the values corresponding to {dynamic_str} separated by spaces: ").split()))
-
-# Populate K-Map matrix based on the minterms
-for idx, minterm in enumerate(minterms):
-    row = idx // col_size
-    col = idx % col_size
-    kmap_matrix[row][col] = minterm
-
-# Generate Gray code labels for row and column
-row_labels = gray_code(math.ceil(num_vars / 2))
-col_labels = gray_code(math.floor(num_vars / 2))
-
-# Plot K-Map
-plot_kmap(kmap_matrix, row_labels, col_labels, vars)

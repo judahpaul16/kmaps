@@ -36,3 +36,42 @@
     transform: rotate(360deg);
   }
 }
+
+.kmap {
+  width: auto;
+  max-height: 400px;
+  background-color: #282c34;
+  color: white;
+  font-size: 1.5em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.MuiPaper-root {
+  height: fit-content;
+}
+
+.MuiContainer-root {
+  display: flex !important;
+  position: absolute !important;
+  max-height: fit-content !important;
+  margin: 0 !important;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%)
+}
+
+.MuiContainer-root > * {
+  box-shadow: 0px 0px 2px 1px #aaaaaa !important;
+  justify-content: center;
+  width: fit-content;
+  margin: 1em;
+}
+
+@media (min-width: 600px) {
+  .MuiContainer-root {
+    max-width: 900px !important;
+  }
+}
