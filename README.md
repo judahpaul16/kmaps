@@ -15,3 +15,5 @@ uvicorn main:app --reload
 ```
 
 ### Live at [judahpaul.com/kmap-gen](https://judahpaul.com/kmap-gen)
+
+![Screenshot](screenshot.png)
