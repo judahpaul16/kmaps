@@ -1,4 +1,4 @@
-# Karnaugh Map Generator
+# 🗺️ Karnaugh Map Generator
 
 This is a simple Karnaugh Map generator written in Python. It takes a boolean expression and generates a Karnaugh Map for it. It also generates the simplified boolean expression from the Karnaugh Map.
 
