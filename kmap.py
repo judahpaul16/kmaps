@@ -24,10 +24,14 @@ def plot_kmap(kmap_matrix, row_labels, col_labels, vars):
     plt.ylabel(" ".join(vars[:math.ceil(num_vars / 2):]))
     
     plt.title(f"Karnaugh Map for {num_vars} variables")
-    plt.show()
+    
+    # plt.show()
+
+    # Output to image
+    plt.savefig("kmap.png", dpi=300)
 
 # Get variables and determine the number of variables
-vars = input("Enter the variables separated by spaces: ").split()
+vars = input("Enter the variables separated by spaces (e.g. 'A, B, C, D' or 'x, y, z'): ").split()
 num_vars = len(vars)
 
 # Generate Gray code labels for minterm inputs
