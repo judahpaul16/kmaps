@@ -17,14 +17,20 @@ def gray_code(n):
 async def plot_kmap(kmap_matrix, row_labels, col_labels, vars):
     """Plot the K-Map using Seaborn's heatmap."""
     num_vars = len(vars)
+
+    # Split the variables evenly between x and y axes
+    half_num_vars = num_vars // 2  # Integer division
+    y_vars = vars[:half_num_vars]
+    x_vars = vars[half_num_vars:]
+
     plt.figure(figsize=(8, 6))
     sns.heatmap(kmap_matrix, annot=True, cmap="coolwarm", cbar=False,
                 xticklabels=col_labels, yticklabels=row_labels, fmt="d",
                 linewidths=.5)
     
     # Set x and y axis labels to vars
-    plt.xlabel(" ".join(vars[math.ceil(num_vars / 2)]))
-    plt.ylabel(" ".join(vars[:math.ceil(num_vars / 2):]))
+    plt.xlabel(" ".join(x_vars))
+    plt.ylabel(" ".join(y_vars))
     
     plt.title(f"Karnaugh Map for {num_vars} variables")
     
