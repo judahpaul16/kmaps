@@ -23,8 +23,8 @@ app.use(express_1.default.static(path_1.default.join(__dirname, 'frontend', 'bui
 app.get('/favicon.ico', (req, res) => {
     res.sendFile(path_1.default.join(__dirname, 'frontend', 'build', 'favicon.ico'));
 });
-// Catch-all route for React App
-app.get('*', (req, res) => {
+// React App
+app.get('/', (req, res) => {
     res.sendFile(path_1.default.join(__dirname, 'frontend/build', 'index.html'));
 });
 // API Route for K-Map Generation

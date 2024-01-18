@@ -31,8 +31,8 @@ app.get('/favicon.ico', (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, 'frontend', 'build', 'favicon.ico'));
 });
 
-// Catch-all route for React App
-app.get('*', (req, res) => {
+// React App
+app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend/build', 'index.html'));
 });
 
