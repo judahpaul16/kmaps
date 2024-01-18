@@ -1,0 +1,29 @@
+{
+  "name": "kmap-generator",
+  "version": "1.0.0",
+  "description": "This is a simple Karnaugh Map generator written in Python. It takes a boolean expression and generates a Karnaugh Map for it. It also generates the simplified boolean expression from the Karnaugh Map.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "tsc && node app.js",
+    "build": "tsc && cd frontend && npm run build && cd .."
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "child_process": "^1.0.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "fs": "^0.0.1-security",
+    "helmet": "^7.1.0",
+    "path": "^0.12.7",
+    "react-scripts": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.19.5",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.5"
+  }
+}

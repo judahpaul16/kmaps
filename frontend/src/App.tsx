@@ -27,7 +27,7 @@ function App() {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/generate', {
+      const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -35,7 +35,7 @@ function App() {
         body: JSON.stringify({ variables: variables.split(' '), minterms: mintermArray }),
       });
       if (response.ok) {
-        const imageUrl = `http://localhost:8000/kmap.png?time=${new Date().getTime()}`;
+        const imageUrl = `/kmap.png?time=${new Date().getTime()}`;
         setImage(imageUrl);
       } else {
         console.error('Error fetching image');
@@ -93,9 +93,9 @@ function App() {
         </CardContent>
       </Card>
       {image && (
-        <Box display="flex" justifyContent="center" marginTop="20px">
-          <img src={image} alt="K-Map" style={{ maxWidth: '100%', height: 'auto' }} />
-        </Box>
+          <Box display="flex" justifyContent="center" marginTop="20px">
+              <img key={image} src={image} alt="K-Map" style={{ maxWidth: '100%', height: 'auto' }} />
+          </Box>
       )}
     </Container>
   );
