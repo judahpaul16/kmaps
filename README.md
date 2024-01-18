@@ -19,17 +19,17 @@ uvicorn main:app --reload
 #!/bin/bash
 
 # Remove old repo
-rm -rf kmap-generator
+rm -rf kmaps
 
 # Make new folder
-mkdir kmap-generator
+mkdir kmaps
 
 # Clone repo to server
-git clone https://github.com/judahpaul16/kmap-generator.git
+git clone https://github.com/judahpaul16/kmaps.git
 
 ## Install python dependencies
 # Create/activate virtual environment
-cd kmap-generator
+cd kmaps
 python3 -m venv env
 source env/bin/activate
 pip install --upgrade pip
@@ -47,4 +47,4 @@ touch ./tmp/restart.txt
 
 ![Screenshot](screenshot.png)
 
-### Live at [judahpaul.com/kmap-gen](https://judahpaul.com/kmap-gen)
+### Live at [kmaps.judahpaul.com](https://kmaps.judahpaul.com/)

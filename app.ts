@@ -1,10 +1,8 @@
 import express, { Request, Response } from 'express';
 import { exec } from 'child_process';
 import path from 'path';
-import fs from 'fs';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import helmet from 'helmet';
 
 type KMapData = {
     variables: string[];
@@ -32,7 +30,7 @@ app.get('/favicon.ico', (req: Request, res: Response) => {
 });
 
 // React App
-app.get('/kmap-gen', (req, res) => {
+app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend/build', 'index.html'));
 });
 
