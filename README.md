@@ -29,9 +29,9 @@ git clone https://github.com/judahpaul16/kmap-generator.git
 
 ## Install python dependencies
 # Create/activate virtual environment
+cd kmap-generator
 python3 -m venv env
 source env/bin/activate
-cd kmap-generator
 pip install --upgrade pip
 pip install -r requirements.txt
 

@@ -1,11 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { TextField, Button, Card, CardContent, Typography, Container, Box } from '@mui/material';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import './App.css';
 
 function App() {
   const [variables, setVariables] = useState('');
   const [minterms, setMinterms] = useState('');
   const [image, setImage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
 
   const numVars = useMemo(() => variables.split(' ').length, [variables]);
   const requiredMinterms = useMemo(() => Math.pow(2, numVars), [numVars]);
@@ -20,6 +24,7 @@ function App() {
   const mintermLabels = useMemo(() => grayCode(numVars), [numVars]);
 
   const fetchImage = async () => {
+    setIsLoading(true);
     const mintermArray = minterms.split(' ').map(Number);
     if (mintermArray.length !== requiredMinterms) {
       alert(`Please enter exactly ${requiredMinterms} minterm values.`);
@@ -41,7 +46,9 @@ function App() {
         console.error('Error fetching image');
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error:', error); 
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -86,8 +93,8 @@ function App() {
               value={minterms}
               onChange={handleMintermsChange}
             />
-            <Button variant="contained" color="primary" type="submit" fullWidth style={{ marginTop: '10px' }}>
-              Generate K-Map
+            <Button variant="contained" color="primary" type="submit" fullWidth style={{ marginTop: '10px' }} disabled={isLoading}>
+              {isLoading ? <FontAwesomeIcon icon={faSpinner} spin /> : 'Generate K-Map'}
             </Button>
           </form>
         </CardContent>
