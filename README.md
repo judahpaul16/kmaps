@@ -14,6 +14,39 @@ Run the server.
 uvicorn main:app --reload
 ```
 
-### Live at [judahpaul.com/kmap-gen](https://judahpaul.com/kmap-gen)
+## Deployment with Phusion Passenger
+```bash
+#!/bin/bash
+
+# Remove old repo
+rm -rf kmap-generator
+
+# Make new folder
+mkdir kmap-generator
+
+# Clone repo to server
+git clone https://github.com/judahpaul16/kmap-generator.git
+
+## Backend
+# Create/activate virtual environment
+python3 -m venv env
+source env/bin/activate
+
+# Install python modules
+pip install -r requirements.txt
+
+## Frontend
+# Build the app
+cd kmap-generator/frontend
+npm i
+npm run build
+cd ..
+
+# Restart Phusion Passenger service
+touch ./tmp/restart.txt
+```
+--- 
 
 ![Screenshot](screenshot.png)
+
+### Live at [judahpaul.com/kmap-gen](https://judahpaul.com/kmap-gen)
