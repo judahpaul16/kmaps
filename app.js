@@ -10,11 +10,20 @@ const cors_1 = __importDefault(require("cors"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
-    origin: 'http://localhost:3000',
+    origin: '*',
     credentials: true,
     methods: 'GET,POST',
-    allowedHeaders: 'Content-Type, Authorization'
+    allowedHeaders: 'Content-Type, Authorization',
+    // Add the following line to set the CSP
+    exposedHeaders: 'Content-Security-Policy',
+    preflightContinue: false,
+    optionsSuccessStatus: 204
 }));
+// Set Content Security Policy
+app.use((req, res, next) => {
+    res.setHeader("Content-Security-Policy", "default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';");
+    next();
+});
 app.use(body_parser_1.default.json());
 // Static Files
 app.use('/static', express_1.default.static(path_1.default.join(__dirname, 'frontend', 'build', 'static')));

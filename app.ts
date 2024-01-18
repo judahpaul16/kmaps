@@ -12,11 +12,21 @@ type KMapData = {
 const app = express();
 
 app.use(cors({
-    origin: 'http://localhost:3000',
-    credentials: true,
-    methods: 'GET,POST',
-    allowedHeaders: 'Content-Type, Authorization'
-}));  
+  origin: '*',
+  credentials: true,
+  methods: 'GET,POST',
+  allowedHeaders: 'Content-Type, Authorization',
+  // Add the following line to set the CSP
+  exposedHeaders: 'Content-Security-Policy',
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+}));
+
+// Set Content Security Policy
+app.use((req, res, next) => {
+  res.setHeader("Content-Security-Policy", "default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';");
+  next();
+});
 
 app.use(bodyParser.json());
 
