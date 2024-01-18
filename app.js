@@ -25,18 +25,18 @@ app.use((req, res, next) => {
     next();
 });
 app.use(body_parser_1.default.json());
-// Static Files
-app.use('/static/*', express_1.default.static(path_1.default.join(__dirname, 'frontend', 'build', 'static')));
-app.use('/static/css/*', express_1.default.static(path_1.default.join(__dirname, 'frontend', 'build', 'static', 'css')));
-app.use('/static/js/*', express_1.default.static(path_1.default.join(__dirname, 'frontend', 'build', 'static', 'js')));
+// Serve static files from the React app build directory
 app.use(express_1.default.static(path_1.default.join(__dirname, 'frontend', 'build')));
 // Favicon Route
 app.get('/favicon.ico', (req, res) => {
     res.sendFile(path_1.default.join(__dirname, 'frontend', 'build', 'favicon.ico'));
 });
 // React App
-app.get('/', (req, res) => {
-    res.sendFile(path_1.default.join(__dirname, 'frontend/build', 'index.html'));
+app.get('*', (req, res) => {
+    if (req.url.includes('static')) {
+        return res.sendFile(path_1.default.join(__dirname, 'frontend', 'build', req.url));
+    }
+    res.sendFile(path_1.default.join(__dirname, 'frontend', 'build', 'index.html'));
 });
 // API Route for K-Map Generation
 app.post('/api/generate', async (req, res) => {

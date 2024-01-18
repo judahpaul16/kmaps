@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import { exec } from 'child_process';
 import path from 'path';
 import cors from 'cors';
@@ -23,32 +23,32 @@ app.use(cors({
 }));
 
 // Set Content Security Policy
-app.use((req, res, next) => {
+app.use((req: any, res: any, next: any) => {
   res.setHeader("Content-Security-Policy", "default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';");
   next();
 });
 
 app.use(bodyParser.json());
 
-// Static Files
-app.use('/static/*', express.static(path.join(__dirname, 'frontend', 'build', 'static')));
-app.use('/static/css/*', express.static(path.join(__dirname, 'frontend', 'build', 'static', 'css')));
-app.use('/static/js/*', express.static(path.join(__dirname, 'frontend', 'build', 'static', 'js')));
+// Serve static files from the React app build directory
 app.use(express.static(path.join(__dirname, 'frontend', 'build')));
 
 // Favicon Route
-app.get('/favicon.ico', (req: Request, res: Response) => {
+app.get('/favicon.ico', (req, res) => {
   res.sendFile(path.join(__dirname, 'frontend', 'build', 'favicon.ico'));
 });
 
 // React App
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'frontend/build', 'index.html'));
+app.get('*', (req, res) => {
+  if (req.url.includes('static')) {
+    return res.sendFile(path.join(__dirname, 'frontend', 'build', req.url));
+  }
+  res.sendFile(path.join(__dirname, 'frontend', 'build', 'index.html'));
 });
 
 // API Route for K-Map Generation
-app.post('/api/generate', async (req: Request, res: Response) => {
-    const data = req.body as KMapData;
+app.post('/api/generate', async (req: any, res: any) => {
+    const data = req.body as unknown as KMapData;
   
     const numVars = data.variables.length;
     const rowSize = 2 ** Math.ceil(numVars / 2);
@@ -80,7 +80,7 @@ app.post('/api/generate', async (req: Request, res: Response) => {
         command = `source env/bin/activate && ${command}`;
     }
 
-    exec(command, (error, stdout, stderr) => {
+    exec(command, (error: any, stdout: any, stderr: any) => {
         if (error) {
             console.error(`exec error: ${error}`);
             return res.status(500).send(stderr);
