@@ -32,10 +32,9 @@ app.get('/favicon.ico', (req: Request, res: Response) => {
 });
 
 // React App
-app.get('/', (req, res) => {
+app.get('/kmap-gen', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend/build', 'index.html'));
 });
-
 
 // API Route for K-Map Generation
 app.post('/api/generate', async (req: Request, res: Response) => {
