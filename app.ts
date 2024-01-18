@@ -34,15 +34,17 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'frontend', 'build')));
 
 // Favicon Route
-app.get('/favicon.ico', (req, res) => {
+app.get('/favicon.ico', (req: any, res: any) => {
   res.sendFile(path.join(__dirname, 'frontend', 'build', 'favicon.ico'));
 });
 
+// serve main.*.js and main.*.css files from the static css or js directories
+app.get(/main\..*\.(js|css)/, (req: any, res: any) => {
+  res.sendFile(path.join(__dirname, 'frontend', 'build', req.url));
+});
+
 // React App
-app.get('*', (req, res) => {
-  if (req.url.includes('static')) {
-    return res.sendFile(path.join(__dirname, 'frontend', 'build', req.url));
-  }
+app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'frontend', 'build', 'index.html'));
 });
 

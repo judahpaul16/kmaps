@@ -31,11 +31,12 @@ app.use(express_1.default.static(path_1.default.join(__dirname, 'frontend', 'bui
 app.get('/favicon.ico', (req, res) => {
     res.sendFile(path_1.default.join(__dirname, 'frontend', 'build', 'favicon.ico'));
 });
+// serve main.*.js and main.*.css files from the static css or js directories
+app.get(/main\..*\.(js|css)/, (req, res) => {
+    res.sendFile(path_1.default.join(__dirname, 'frontend', 'build', req.url));
+});
 // React App
-app.get('*', (req, res) => {
-    if (req.url.includes('static')) {
-        return res.sendFile(path_1.default.join(__dirname, 'frontend', 'build', req.url));
-    }
+app.get('/', (req, res) => {
     res.sendFile(path_1.default.join(__dirname, 'frontend', 'build', 'index.html'));
 });
 // API Route for K-Map Generation
