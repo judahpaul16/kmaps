@@ -31,7 +31,9 @@ app.use((req, res, next) => {
 app.use(bodyParser.json());
 
 // Static Files
-app.use('/static', express.static(path.join(__dirname, 'frontend', 'build', 'static')));
+app.use('/static/*', express.static(path.join(__dirname, 'frontend', 'build', 'static')));
+app.use('/static/css/*', express.static(path.join(__dirname, 'frontend', 'build', 'static', 'css')));
+app.use('/static/js/*', express.static(path.join(__dirname, 'frontend', 'build', 'static', 'js')));
 app.use(express.static(path.join(__dirname, 'frontend', 'build')));
 
 // Favicon Route

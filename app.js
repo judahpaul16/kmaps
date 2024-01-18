@@ -26,7 +26,9 @@ app.use((req, res, next) => {
 });
 app.use(body_parser_1.default.json());
 // Static Files
-app.use('/static', express_1.default.static(path_1.default.join(__dirname, 'frontend', 'build', 'static')));
+app.use('/static/*', express_1.default.static(path_1.default.join(__dirname, 'frontend', 'build', 'static')));
+app.use('/static/css/*', express_1.default.static(path_1.default.join(__dirname, 'frontend', 'build', 'static', 'css')));
+app.use('/static/js/*', express_1.default.static(path_1.default.join(__dirname, 'frontend', 'build', 'static', 'js')));
 app.use(express_1.default.static(path_1.default.join(__dirname, 'frontend', 'build')));
 // Favicon Route
 app.get('/favicon.ico', (req, res) => {
