@@ -1,7 +1,7 @@
 {
   "name": "kmap-generator",
   "version": "1.0.0",
-  "description": "This is a simple Karnaugh Map generator written in Python. It takes a boolean expression and generates a Karnaugh Map for it. It also generates the simplified boolean expression from the Karnaugh Map.",
+  "description": "This is a simple Karnaugh Map generator.",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
