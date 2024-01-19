@@ -53,8 +53,13 @@
   height: fit-content;
 }
 
+@media (min-width: 900px) {
+  .MuiContainer-root {
+    display: flex !important;
+  }
+}
+
 .MuiContainer-root {
-  display: flex !important;
   position: absolute !important;
   max-height: fit-content !important;
   border-radius: 5px !important;
@@ -70,6 +75,7 @@
   border-radius: 5px !important;
   justify-content: center;
   width: fit-content;
+  max-width: 84vw;
   margin: 1em;
 }
 
@@ -77,4 +83,16 @@
   .MuiContainer-root {
     max-width: 900px !important;
   }
+}
+
+h6.MuiTypography-root {
+  display: table;
+}
+
+h6.MuiTypography-root > * {
+  display: inline-table;
+}
+
+.highlighted {
+  background-color: #ffc500;
 }

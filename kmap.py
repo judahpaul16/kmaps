@@ -32,10 +32,12 @@ def plot_kmap(kmap_matrix, row_labels, col_labels, vars):
                 linewidths=.5)
 
     # Set x and y axis labels to vars
-    plt.xlabel(" ".join(x_vars))
-    plt.ylabel(" ".join(y_vars))
+    plt.xlabel(" ".join(x_vars), fontsize=18)
+    plt.ylabel(" ".join(y_vars), fontsize=18)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
 
-    plt.title(f"Karnaugh Map for {num_vars} variables")
+    plt.title(f"Karnaugh Map for {num_vars} variables", fontsize=20)
 
     # plt.show()
 
