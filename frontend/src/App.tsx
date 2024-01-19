@@ -24,22 +24,17 @@ const App: React.FC<AppProps> = () => {
 
   const mintermLabels = useMemo(() => grayCode(numVars), [numVars]);
 
-  const fetchImage = async () => {
+  const fetchImage = async (orderedMinterms: number[]) => {
     setIsLoading(true);
-    const mintermArray = minterms.split(' ').map(Number);
-    if (mintermArray.length !== requiredMinterms) {
-      alert(`Please enter exactly ${requiredMinterms} minterm values.`);
-      setIsLoading(false);
-      return;
-    }
-
+  
+    // Use ordered minterms instead of splitting the minterms state
     try {
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ variables: variables.split(' '), minterms: mintermArray }),
+        body: JSON.stringify({ variables: variables.split(' '), minterms: orderedMinterms }),
       });
       if (response.ok) {
         const imageUrl = `/kmap.png?time=${new Date().getTime()}`;
@@ -59,14 +54,56 @@ const App: React.FC<AppProps> = () => {
     setMinterms('');
   };
 
+  // Helper function to convert a binary number to its Gray code equivalent
+  const binaryToGray = (binary: string): string => {
+    const binaryNum = parseInt(binary, 2);
+    const grayNum = binaryNum ^ (binaryNum >> 1);
+    return grayNum.toString(2).padStart(binary.length, '0');
+  };
+
+  // Function to create a mapping from binary to Gray code
+  const createBinaryToGrayMapping = (grayLabels: string[]): Record<string, number> => {
+    return grayLabels.reduce((map: Record<string, number>, grayLabel: string, index: number) => {
+      const binaryLabel = index.toString(2).padStart(grayLabel.length, '0');
+      const grayCode = binaryToGray(binaryLabel);
+      map[grayCode] = index;
+      return map;
+    }, {});
+  };
+
+  // Function to reorder minterms to match the Gray code sequence
+  function orderMintermsToGrayCode(minterms: number[], grayLabels: string[]): number[] {
+    const binaryToGrayMap = createBinaryToGrayMapping(grayLabels);
+    const orderedMinterms = new Array(minterms.length);
+    
+    minterms.forEach((mintermValue: number, index: number) => {
+      const binaryIndex = index.toString(2).padStart(grayLabels.length, '0');
+      const grayIndex = binaryToGrayMap[binaryIndex];
+      orderedMinterms[grayIndex] = mintermValue;
+    });
+
+    return orderedMinterms;
+  }
+
+  // When setting the minterms, ensure they match the Gray code order
   const handleMintermsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setMinterms(event.target.value);
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    fetchImage();
-  };
+  
+    // Split the minterms and convert them to numbers
+    const inputMinterms = minterms.split(' ').filter(minterm => minterm !== '').map(Number);
+  
+    // Check if the number of minterms is correct and all are numbers
+    if (inputMinterms.length !== requiredMinterms || inputMinterms.some(isNaN)) {
+      alert(`Please enter exactly ${requiredMinterms} numeric minterm values.`);
+      return;
+    }
+  
+    fetchImage(inputMinterms);
+  };  
 
   // Function to determine the highlighted index
   const highlightedIndex = () => {
