@@ -1,74 +1,165 @@
+from sympy import symbols, sympify, simplify_logic
+from sympy.parsing.sympy_parser import parse_expr
+from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
 from pathlib import Path
 import seaborn as sns
 import numpy as np
 import argparse
 import math
+import re
 
-ROOT_DIRECTORY = Path(__file__).parent
+# Path to the root directory
+ROOT_DIRECTORY = Path(__file__).resolve().parent
 
+# Helper function to generate Gray code sequence of n bits
 def gray_code(n):
-    """Generate Gray code sequence of n bits."""
     if n == 0:
         return ['']
     first_half = gray_code(n - 1)
     second_half = first_half[::-1]
     return ['0' + code for code in first_half] + ['1' + code for code in second_half]
 
+# Function to order Gray code for Karnaugh map indices
 def order_gray_code(num_vars):
-    """Generate a 2D array of indices for a Karnaugh map based on Gray code."""
-    # Generate the Gray code sequence
     gray_codes = gray_code(num_vars)
-
-    # Calculate the number of rows and columns in the Karnaugh map
     rows = 2 ** math.ceil(num_vars / 2)
     cols = 2 ** math.floor(num_vars / 2)
-
-    # Initialize the 2D array for the Gray code index mapping
     gray_order = np.zeros((rows, cols), dtype=int)
-
-    # Determine the binary to Gray code mapping
     binary_to_gray = {i: int(code, 2) for i, code in enumerate(gray_codes)}
-
-    # Calculate the reflected binary values for the rows
     reflected_binary_row_values = [binary_to_gray[i] for i in range(rows)]
-
-    # Calculate the standard binary values for the columns
     standard_binary_col_values = [binary_to_gray[i] for i in range(cols)]
-
-    # Populate the Gray order array based on the Karnaugh map layout
     for row in range(rows):
         for col in range(cols):
-            # Combine the reflected row and standard column Gray code values
             combined_gray_value = (reflected_binary_row_values[row] << math.floor(num_vars / 2)) | standard_binary_col_values[col]
-            # Find the index of this combined Gray code value
             gray_order[row, col] = gray_codes.index(bin(combined_gray_value)[2:].zfill(num_vars))
-
     return gray_order
 
-def plot_kmap(kmap_matrix, row_labels, col_labels, vars):
-    """Plot the K-Map using Seaborn's heatmap."""
-    num_vars = len(vars)
+# Function to find optimal groupings for Karnaugh map
+def find_valid_groupings(kmap_matrix):
+    rows, cols = kmap_matrix.shape
+    valid_groupings = []
+    visited = np.zeros_like(kmap_matrix, dtype=bool)  # Keep track of visited cells
 
-    # Determine the number of variables for each axis
+    # Potential group sizes in descending order
+    group_sizes = [(2, 4), (4, 2), (2, 2), (1, 4), (4, 1), (1, 2), (2, 1), (1, 1)]
+
+    # Check if the cells are valid for grouping
+    def check_group(row, col, size):
+        r_size, c_size = size
+        for i in range(r_size):
+            for j in range(c_size):
+                if visited[(row + i) % rows][(col + j) % cols] or kmap_matrix[(row + i) % rows][(col + j) % cols] == 0:
+                    return False
+        return True
+
+    # Mark the grouped cells as visited
+    def mark_visited(row, col, size):
+        r_size, c_size = size
+        for i in range(r_size):
+            for j in range(c_size):
+                visited[(row + i) % rows][(col + j) % cols] = True
+
+    # Find groupings
+    for size in group_sizes:
+        for row in range(rows):
+            for col in range(cols):
+                if check_group(row, col, size):
+                    valid_groupings.append((row, col, size[0], size[1]))
+                    mark_visited(row, col, size)
+
+    return valid_groupings
+
+def get_equation(grouping, vars, sop_or_pos):
+    row, col, height, width = grouping
+    row_vars = vars[:math.ceil(len(vars) / 2)]
+    col_vars = vars[math.ceil(len(vars) / 2):]
+    row_values = [row_vars[i] if i < height else row_vars[i] + "'" for i in range(len(row_vars))]
+    col_values = [col_vars[i] if i < width else col_vars[i] + "'" for i in range(len(col_vars))]
+    if sop_or_pos == "sop":
+        return " + ".join(["".join(row_values), "".join(col_values)])
+    elif sop_or_pos == "pos":
+        return ")(".join(["(" + "+".join(row_values), "+".join(col_values) + ")"])
+
+def simplify_equation(equation, sop_or_pos):
+    try:
+        # Parse the string into a sympy expression
+        equation = re.sub(r"([a-zA-Z])'", r"~\1", equation) # Replace ' with ~
+        equation = re.sub(r"\+", r"|", equation) # Replace + with |
+        equation = re.sub(r"([a-zA-Z])([~a-zA-Z])", r"\1 & \2", equation) # Place & between all variables
+        equation = re.sub(r"\)\(", r" & ", equation)
+        equation = re.sub(r"\(", r"", equation) # Remove (
+        equation = re.sub(r"\)", r"", equation) # Remove )
+        # print(equation)
+
+        expr = parse_expr(equation)
+        
+        # Simplify the expression using sympy's simplify_logic function
+        if sop_or_pos == "sop":
+            simplified_expr = simplify_logic(expr, form='dnf')
+        elif sop_or_pos == "pos":
+            simplified_expr = simplify_logic(expr, form='cnf')
+        
+        # Convert the sympy expression back to a string
+        simplified_str = str(simplified_expr)
+        # Reverse the replacements made earlier
+        simplified_str = re.sub(r"~([a-zA-Z])", r"\1'", simplified_str)
+        simplified_str = re.sub(r"\|", r"+", simplified_str)
+        simplified_str = re.sub(r"&", r")(", simplified_str)
+        simplified_str = re.sub(r"([a-zA-Z]) & ([a-zA-Z])", r"\1\2", simplified_str)
+        simplified_str = re.sub(r"\(", r"", simplified_str)
+        simplified_str = re.sub(r"\)", r"", simplified_str)
+        simplified_str = re.sub(r"([a-zA-Z]) +([a-zA-Z])", r"\1\2", simplified_str)
+        
+        return simplified_str
+    except Exception as e:
+        print(f"An error occurred during simplification: {e}")
+        return equation
+    
+# Plot the K-map with highlighted groupings
+def plot_kmap(kmap_matrix, row_labels, col_labels, vars, sop_or_pos="sop"):
+    num_vars = len(vars)
     num_row_vars = math.ceil(num_vars / 2)
     num_col_vars = num_vars // 2
-
-    y_vars = vars[:num_row_vars]  # Variables for y-axis
-    x_vars = vars[num_row_vars:]  # Variables for x-axis
-
-    plt.figure(figsize=(8, 6))
+    y_vars = vars[:num_row_vars]
+    x_vars = vars[num_row_vars:]
+    fig, ax = plt.subplots(figsize=(8, 6))
     sns.heatmap(kmap_matrix, annot=True, cmap="coolwarm", cbar=False,
                 xticklabels=col_labels, yticklabels=row_labels, fmt="d",
-                linewidths=.5)
+                linewidths=.5, ax=ax)
 
-    # Set x and y axis labels to vars
+    # Find and highlight the groupings
+    groupings = find_valid_groupings(kmap_matrix)
+    colors = ['green', 'blue', 'yellow', 'purple']
+    for idx, (row, col, height, width) in enumerate(groupings):
+        color = colors[idx % len(colors)]  # Cycle through colors
+        ax.add_patch(Rectangle((col, row), width, height, fill=None,
+                               linewidth=2 * math.sqrt(height + width),
+                               edgecolor=color))
+        
+    # Define the equations for the groupings in legend corresponding to the colors
+    equations = [eq for eq in [get_equation(grouping, vars, sop_or_pos) for grouping in groupings]]
+    # Plot the empty lines with corresponding colors and labels
+    for i in range(len(groupings)):
+        plt.plot([], [], color=colors[i % len(colors)], label=equations[i])
+
+    if sop_or_pos == "sop":
+        equation = " + ".join(equations)
+    elif sop_or_pos == "pos":
+        equation = ") + (".join(equations)
+
+    simplified_equation = simplify_equation(equation, sop_or_pos)
+
+    # Display the simplified equation
+    plt.text(1, 1.25 * kmap_matrix.shape[0], f"Equation: {simplified_equation}", fontsize=20)
+
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='best', borderaxespad=0., fontsize=18)
     plt.xlabel(" ".join(x_vars), fontsize=18)
     plt.ylabel(" ".join(y_vars), fontsize=18)
     plt.xticks(fontsize=14)
     plt.yticks(fontsize=14)
-
     plt.title(f"Karnaugh Map for {num_vars} variables", fontsize=20)
+    plt.tight_layout()
 
     # Output to image
     plt.savefig(ROOT_DIRECTORY / "frontend" / "build" / "kmap.png", dpi=300)
