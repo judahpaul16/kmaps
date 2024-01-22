@@ -1,7 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { TextField, Button, Card, CardContent, Typography, Container, Box } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import RadioButtons from './components/RadioButtons';
 import './App.css';
 
 interface AppProps {}
@@ -11,6 +12,7 @@ const App: React.FC<AppProps> = () => {
   const [minterms, setMinterms] = useState<string>('');
   const [image, setImage] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [sopOrPos, setSopOrPos] = useState<string>('sop');
 
   const numVars = useMemo(() => variables.split(' ').length, [variables]);
   const requiredMinterms = useMemo(() => Math.pow(2, numVars), [numVars]);
@@ -22,6 +24,7 @@ const App: React.FC<AppProps> = () => {
     return firstHalf.map(code => '0' + code).concat(secondHalf.map(code => '1' + code));
   };
 
+  // eslint-disable-next-line
   const mintermLabels = useMemo(() => grayCode(numVars), [numVars]);
 
   const fetchImage = async (orderedMinterms: number[]) => {
@@ -34,7 +37,7 @@ const App: React.FC<AppProps> = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ variables: variables.split(' '), minterms: orderedMinterms }),
+        body: JSON.stringify({ variables: variables.split(' '), minterms: orderedMinterms, sop_or_pos: sopOrPos }),
       });
       if (response.ok) {
         const imageUrl = `/kmap.png?time=${new Date().getTime()}`;
@@ -53,37 +56,6 @@ const App: React.FC<AppProps> = () => {
     setVariables(event.target.value);
     setMinterms('');
   };
-
-  // Helper function to convert a binary number to its Gray code equivalent
-  const binaryToGray = (binary: string): string => {
-    const binaryNum = parseInt(binary, 2);
-    const grayNum = binaryNum ^ (binaryNum >> 1);
-    return grayNum.toString(2).padStart(binary.length, '0');
-  };
-
-  // Function to create a mapping from binary to Gray code
-  const createBinaryToGrayMapping = (grayLabels: string[]): Record<string, number> => {
-    return grayLabels.reduce((map: Record<string, number>, grayLabel: string, index: number) => {
-      const binaryLabel = index.toString(2).padStart(grayLabel.length, '0');
-      const grayCode = binaryToGray(binaryLabel);
-      map[grayCode] = index;
-      return map;
-    }, {});
-  };
-
-  // Function to reorder minterms to match the Gray code sequence
-  function orderMintermsToGrayCode(minterms: number[], grayLabels: string[]): number[] {
-    const binaryToGrayMap = createBinaryToGrayMapping(grayLabels);
-    const orderedMinterms = new Array(minterms.length);
-    
-    minterms.forEach((mintermValue: number, index: number) => {
-      const binaryIndex = index.toString(2).padStart(grayLabels.length, '0');
-      const grayIndex = binaryToGrayMap[binaryIndex];
-      orderedMinterms[grayIndex] = mintermValue;
-    });
-
-    return orderedMinterms;
-  }
 
   // When setting the minterms, ensure they match the Gray code order
   const handleMintermsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -147,6 +119,7 @@ const App: React.FC<AppProps> = () => {
               value={minterms}
               onChange={handleMintermsChange}
             />
+            <RadioButtons onValueChange={(value) => setSopOrPos(value)} />
             <Button variant="contained" color="primary" type="submit" fullWidth style={{ marginTop: '10px' }} disabled={isLoading}>
               {isLoading ? <FontAwesomeIcon icon={faSpinner} spin /> : 'Generate K-Map'}
             </Button>

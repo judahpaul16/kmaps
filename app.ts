@@ -7,6 +7,7 @@ import bodyParser from 'body-parser';
 type KMapData = {
     variables: string[];
     minterms: number[];
+    sop_or_pos: string;
 };
 
 const app = express();
@@ -55,6 +56,7 @@ app.post('/api/generate', async (req: any, res: any) => {
     const numVars = data.variables.length;
     const rowSize = 2 ** Math.ceil(numVars / 2);
     const colSize = 2 ** Math.floor(numVars / 2);
+    const sop_or_pos = data.sop_or_pos;
   
     const grayCode = (n: number): string[] => {
       if (n === 0) return [''];
@@ -75,7 +77,7 @@ app.post('/api/generate', async (req: any, res: any) => {
   
     const flattenedMatrix = kmapMatrix.flat();
 
-    let command = `python kmap.py ${numVars} ${data.variables.join('+')} ${rowLabels.join('+')} ${colLabels.join('+')} ${flattenedMatrix.join('+')}`;
+    let command = `python kmap.py ${data.variables.join('+')} ${rowLabels.join('+')} ${colLabels.join('+')} ${flattenedMatrix.join('+')} ${sop_or_pos}`;
     if (process.platform === 'win32') {
         command = `env\\Scripts\\activate.bat && ${command}`;
     } else {

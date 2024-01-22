@@ -72,52 +72,61 @@ def find_valid_groupings(kmap_matrix):
 
 def get_equation(grouping, vars, sop_or_pos):
     row, col, height, width = grouping
-    row_vars = vars[:math.ceil(len(vars) / 2)]
-    col_vars = vars[math.ceil(len(vars) / 2):]
-    row_values = [row_vars[i] if i < height else row_vars[i] + "'" for i in range(len(row_vars))]
-    col_values = [col_vars[i] if i < width else col_vars[i] + "'" for i in range(len(col_vars))]
+    num_row_vars = math.ceil(len(vars) / 2)
+    row_vars = vars[:num_row_vars]
+    col_vars = vars[num_row_vars:]
+
+    row_values = []
+    for i in range(len(row_vars)):
+        if (row & (1 << i)) >> i == (height & (1 << i)) >> i:
+            row_values.append(row_vars[i])
+        else:
+            row_values.append(row_vars[i] + "'")
+
+    col_values = []
+    for j in range(len(col_vars)):
+        if (col & (1 << j)) >> j == (width & (1 << j)) >> j:
+            col_values.append(col_vars[j])
+        else:
+            col_values.append(col_vars[j] + "'")
+
     if sop_or_pos == "sop":
-        return " + ".join(["".join(row_values), "".join(col_values)])
+        return "".join(row_values + col_values)
     elif sop_or_pos == "pos":
-        return ")(".join(["(" + "+".join(row_values), "+".join(col_values) + ")"])
+        return "(" + " + ".join(row_values + col_values) + ")"
 
 def simplify_equation(equation, sop_or_pos):
-    try:
-        # Parse the string into a sympy expression
-        equation = re.sub(r"([a-zA-Z])'", r"~\1", equation) # Replace ' with ~
-        equation = re.sub(r"\+", r"|", equation) # Replace + with |
-        equation = re.sub(r"([a-zA-Z])([~a-zA-Z])", r"\1 & \2", equation) # Place & between all variables
-        equation = re.sub(r"\)\(", r" & ", equation)
-        equation = re.sub(r"\(", r"", equation) # Remove (
-        equation = re.sub(r"\)", r"", equation) # Remove )
-        # print(equation)
+    # Parse the string into a sympy expression
+    equation = re.sub(r"\+", r"|", equation) # Replace + with |
+    equation = re.sub(r"([a-zA-Z])'?([a-zA-Z]'?)", r"\1 & \2", equation) # Place & between all variables
+    equation = re.sub(r"\)\(", r" & ", equation)
+    equation = re.sub(r"([a-zA-Z])'", r"~\1", equation) # Replace ' with ~
+    equation = re.sub(r"\(", r"", equation) # Remove (
+    equation = re.sub(r"\)", r"", equation) # Remove )
+    # print(equation)
 
-        expr = parse_expr(equation)
-        
-        # Simplify the expression using sympy's simplify_logic function
-        if sop_or_pos == "sop":
-            simplified_expr = simplify_logic(expr, form='dnf')
-        elif sop_or_pos == "pos":
-            simplified_expr = simplify_logic(expr, form='cnf')
-        
-        # Convert the sympy expression back to a string
-        simplified_str = str(simplified_expr)
-        # Reverse the replacements made earlier
-        simplified_str = re.sub(r"~([a-zA-Z])", r"\1'", simplified_str)
-        simplified_str = re.sub(r"\|", r"+", simplified_str)
-        simplified_str = re.sub(r"&", r")(", simplified_str)
-        simplified_str = re.sub(r"([a-zA-Z]) & ([a-zA-Z])", r"\1\2", simplified_str)
-        simplified_str = re.sub(r"\(", r"", simplified_str)
-        simplified_str = re.sub(r"\)", r"", simplified_str)
-        simplified_str = re.sub(r"([a-zA-Z]) +([a-zA-Z])", r"\1\2", simplified_str)
-        
-        return simplified_str
-    except Exception as e:
-        print(f"An error occurred during simplification: {e}")
-        return equation
+    expr = parse_expr(equation)
+    
+    # Simplify the expression using sympy's simplify_logic function
+    if sop_or_pos == "sop":
+        simplified_expr = simplify_logic(expr, form='dnf')
+    elif sop_or_pos == "pos":
+        simplified_expr = simplify_logic(expr, form='cnf')
+    
+    # Convert the sympy expression back to a string
+    simplified_str = str(simplified_expr)
+    simplified_str = re.sub(r"~([a-zA-Z])", r"\1'", simplified_str)
+    simplified_str = re.sub(r"\|", r"+", simplified_str)
+    simplified_str = re.sub(r"&", r")(", simplified_str)
+    simplified_str = re.sub(r"([a-zA-Z]) & ([a-zA-Z])", r"\1\2", simplified_str)
+    simplified_str = re.sub(r"\(", r"", simplified_str)
+    simplified_str = re.sub(r"\)", r"", simplified_str)
+    simplified_str = re.sub(r"([a-zA-Z]) +([a-zA-Z])", r"\1\2", simplified_str)
+    
+    return simplified_str
     
 # Plot the K-map with highlighted groupings
-def plot_kmap(kmap_matrix, row_labels, col_labels, vars, sop_or_pos="sop"):
+def plot_kmap(kmap_matrix, row_labels, col_labels, vars, sop_or_pos):
     num_vars = len(vars)
     num_row_vars = math.ceil(num_vars / 2)
     num_col_vars = num_vars // 2
@@ -151,9 +160,9 @@ def plot_kmap(kmap_matrix, row_labels, col_labels, vars, sop_or_pos="sop"):
     simplified_equation = simplify_equation(equation, sop_or_pos)
 
     # Display the simplified equation
-    plt.text(1, 1.25 * kmap_matrix.shape[0], f"Equation: {simplified_equation}", fontsize=20)
+    plt.text(0.666, 1.25 * kmap_matrix.shape[0], f"Equation: {simplified_equation}", fontsize=20)
 
-    plt.legend(bbox_to_anchor=(1.05, 1), loc='best', borderaxespad=0., fontsize=18)
+    plt.legend(bbox_to_anchor=(1.05, 0.5), loc='center left', borderaxespad=0., fontsize=18)
     plt.xlabel(" ".join(x_vars), fontsize=18)
     plt.ylabel(" ".join(y_vars), fontsize=18)
     plt.xticks(fontsize=14)
@@ -166,27 +175,29 @@ def plot_kmap(kmap_matrix, row_labels, col_labels, vars, sop_or_pos="sop"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Plot K-Map")
-    parser.add_argument("num_vars", type=int, help="Number of variables")
     parser.add_argument("vars", type=str, nargs="+", help="Variables")
     parser.add_argument("row_labels", type=str, nargs="+", help="Row labels")
     parser.add_argument("col_labels", type=str, nargs="+", help="Column labels")
     parser.add_argument("kmap_matrix", type=str, help="K-Map matrix")
+    parser.add_argument("sop_or_pos", type=str, help="SOP or POS")
     args = parser.parse_args()
 
     # Convert the K-Map matrix from a string to a list of integers
     vars = args.vars[0].split("+")
+    num_vars = len(vars)
     row_labels = args.row_labels[0].split("+")
     col_labels = args.col_labels[0].split("+")
     kmap_matrix_values = [int(x, 2) for x in args.kmap_matrix.split("+")]
+    sop_or_pos = args.sop_or_pos
 
     # Create an empty K-Map matrix
-    matrix_size = (2 ** (math.ceil(args.num_vars / 2)), 2 ** (math.floor(args.num_vars / 2)))
+    matrix_size = (2 ** (math.ceil(num_vars / 2)), 2 ** (math.floor(num_vars / 2)))
     kmap_matrix = np.zeros(matrix_size, dtype=int)
 
     # Fill in the K-Map matrix
-    gray_order = order_gray_code(args.num_vars)
+    gray_order = order_gray_code(num_vars)
     for i in range(len(kmap_matrix_values)):
         kmap_matrix[gray_order == i] = kmap_matrix_values[i]
 
     # Plot the K-Map
-    plot_kmap(kmap_matrix, row_labels, col_labels, vars)
+    plot_kmap(kmap_matrix, row_labels, col_labels, vars, sop_or_pos)
