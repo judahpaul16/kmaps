@@ -1,4 +1,4 @@
-from sympy import symbols, sympify, simplify_logic
+from sympy import symbols, sympify, simplify_logic, Not, And, Or, Xor, Nand, Nor, Implies, Equivalent, ITE
 from sympy.parsing.sympy_parser import parse_expr
 from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
@@ -6,6 +6,7 @@ from pathlib import Path
 import seaborn as sns
 import numpy as np
 import argparse
+import sympy
 import math
 import re
 
@@ -36,7 +37,7 @@ def order_gray_code(num_vars):
     return gray_order
 
 # Function to find optimal groupings for Karnaugh map
-def find_valid_groupings(kmap_matrix):
+def find_valid_groupings(kmap_matrix, sop_or_pos):
     rows, cols = kmap_matrix.shape
     valid_groupings = []
     visited = np.zeros_like(kmap_matrix, dtype=bool)  # Keep track of visited cells
@@ -44,12 +45,18 @@ def find_valid_groupings(kmap_matrix):
     # Potential group sizes in descending order
     group_sizes = [(2, 4), (4, 2), (2, 2), (1, 4), (4, 1), (1, 2), (2, 1), (1, 1)]
 
+    # If SOP, find 1s. If POS, find 0s
+    if sop_or_pos == "sop":
+        row_indices, col_indices = np.where(kmap_matrix == 1)
+    elif sop_or_pos == "pos":
+        row_indices, col_indices = np.where(kmap_matrix == 0)
+
     # Check if the cells are valid for grouping
     def check_group(row, col, size):
         r_size, c_size = size
         for i in range(r_size):
             for j in range(c_size):
-                if visited[(row + i) % rows][(col + j) % cols] or kmap_matrix[(row + i) % rows][(col + j) % cols] == 0:
+                if visited[(row + i) % rows][(col + j) % cols] or kmap_matrix[(row + i) % rows][(col + j) % cols] != kmap_matrix[row][col]:
                     return False
         return True
 
@@ -61,12 +68,13 @@ def find_valid_groupings(kmap_matrix):
                 visited[(row + i) % rows][(col + j) % cols] = True
 
     # Find groupings
-    for size in group_sizes:
-        for row in range(rows):
-            for col in range(cols):
-                if check_group(row, col, size):
-                    valid_groupings.append((row, col, size[0], size[1]))
-                    mark_visited(row, col, size)
+    for row, col in zip(row_indices, col_indices):
+        for size in group_sizes:
+            r_size, c_size = size
+            if check_group(row, col, size):
+                valid_groupings.append((row, col, r_size, c_size))
+                mark_visited(row, col, size)
+                break
 
     return valid_groupings
 
@@ -79,14 +87,20 @@ def get_equation(grouping, vars, sop_or_pos):
     row_values = []
     for i in range(len(row_vars)):
         if (row & (1 << i)) >> i == (height & (1 << i)) >> i:
-            row_values.append(row_vars[i])
+            if (row & (1 << i)) >> i == 1:
+                row_values.append(row_vars[i])
+            else:
+                pass
         else:
             row_values.append(row_vars[i] + "'")
 
     col_values = []
     for j in range(len(col_vars)):
         if (col & (1 << j)) >> j == (width & (1 << j)) >> j:
-            col_values.append(col_vars[j])
+            if (col & (1 << j)) >> j == 1:
+                col_values.append(col_vars[j])
+            else:
+                pass
         else:
             col_values.append(col_vars[j] + "'")
 
@@ -96,22 +110,26 @@ def get_equation(grouping, vars, sop_or_pos):
         return "(" + " + ".join(row_values + col_values) + ")"
 
 def simplify_equation(equation, sop_or_pos):
+    # print(equation)
     # Parse the string into a sympy expression
     equation = re.sub(r"\+", r"|", equation) # Replace + with |
-    equation = re.sub(r"([a-zA-Z])'?([a-zA-Z]'?)", r"\1 & \2", equation) # Place & between all variables
+    equation = re.sub(r"([a-zA-Z])'?([a-zA-Z])'?", r"\1 & \2", equation) # Place & between all variables
     equation = re.sub(r"\)\(", r" & ", equation)
     equation = re.sub(r"([a-zA-Z])'", r"~\1", equation) # Replace ' with ~
+    equation = re.sub(r"([a-zA-Z])~?([a-zA-Z])", r"\1 & \2", equation)
     equation = re.sub(r"\(", r"", equation) # Remove (
     equation = re.sub(r"\)", r"", equation) # Remove )
     # print(equation)
 
     expr = parse_expr(equation)
-    
+
     # Simplify the expression using sympy's simplify_logic function
     if sop_or_pos == "sop":
         simplified_expr = simplify_logic(expr, form='dnf')
     elif sop_or_pos == "pos":
         simplified_expr = simplify_logic(expr, form='cnf')
+        # apply De Morgan's law
+        simplified_expr = apply_demorgans_law(simplified_expr)
     
     # Convert the sympy expression back to a string
     simplified_str = str(simplified_expr)
@@ -125,6 +143,26 @@ def simplify_equation(equation, sop_or_pos):
     
     return simplified_str
     
+def apply_demorgans_law(equation):
+    # print(equation)
+    # print(equation.__class__)
+    if isinstance(equation, And):
+        args = list(equation.args)
+        for i in range(len(args)):
+            args[i] = apply_demorgans_law(args[i])
+        return Or(*args)
+    elif isinstance(equation, Or):
+        args = list(equation.args)
+        for i in range(len(args)):
+            args[i] = apply_demorgans_law(args[i])
+        return And(*args)
+    elif isinstance(equation, Not):
+        return equation.args[0]
+    elif isinstance(equation, sympy.core.symbol.Symbol):
+        return Not(equation)
+    else:
+        return equation
+
 # Plot the K-map with highlighted groupings
 def plot_kmap(kmap_matrix, row_labels, col_labels, vars, sop_or_pos):
     num_vars = len(vars)
@@ -138,7 +176,7 @@ def plot_kmap(kmap_matrix, row_labels, col_labels, vars, sop_or_pos):
                 linewidths=.5, ax=ax)
 
     # Find and highlight the groupings
-    groupings = find_valid_groupings(kmap_matrix)
+    groupings = find_valid_groupings(kmap_matrix, sop_or_pos)
     colors = ['green', 'blue', 'yellow', 'purple']
     for idx, (row, col, height, width) in enumerate(groupings):
         color = colors[idx % len(colors)]  # Cycle through colors
