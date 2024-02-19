@@ -213,6 +213,7 @@ def plot_kmap(kmap_matrix, row_labels, col_labels, vars, sop_or_pos):
         equation = " + ".join(equations)
     elif sop_or_pos == "pos":
         equation = ") + (".join(equations)
+        equation = f"({equation})"
 
     simplified_equation = simplify_equation(equation, sop_or_pos)
 
