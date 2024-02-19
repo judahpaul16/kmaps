@@ -78,36 +78,55 @@ def find_valid_groupings(kmap_matrix, sop_or_pos):
 
     return valid_groupings
 
-def get_equation(grouping, vars, sop_or_pos):
+def get_equation(grouping, vars):
     row, col, height, width = grouping
-    num_row_vars = math.ceil(len(vars) / 2)
-    row_vars = vars[:num_row_vars]
-    col_vars = vars[num_row_vars:]
+    terms = []
+    num_vars = len(vars)
+    row_vars_count = math.ceil(num_vars / 2)
+    col_vars_count = num_vars - row_vars_count
+    row_vars = vars[:row_vars_count]
+    col_vars = vars[row_vars_count:]
+    gray_order = order_gray_code(num_vars)
+    
+    # Helper function to convert binary to Gray code
+    def binary_to_gray(binary):
+        binary = int(binary, 2)
+        gray = binary ^ (binary >> 1)
+        return format(gray, '0' + str(num_vars) + 'b')
 
-    row_values = []
-    for i in range(len(row_vars)):
-        if (row & (1 << i)) >> i == (height & (1 << i)) >> i:
-            if (row & (1 << i)) >> i == 1:
-                row_values.append(row_vars[i])
+    # Helper function to get the binary representation of the Gray code index
+    def gray_index_to_binary(index, num_vars):
+        binary = format(index, '0' + str(num_vars) + 'b')
+        gray = binary_to_gray(binary)
+        return gray
+
+    # Determine which variables are constant across the entire grouping
+    for var_idx, var in enumerate(row_vars + col_vars):
+        if var_idx < len(row_vars):  # Row variable
+            group_range = [gray_order[(row + i) % (2 ** row_vars_count), 0] for i in range(height)]
+        else:  # Column variable
+            group_range = [gray_order[0, (col + i) % (2 ** col_vars_count)] for i in range(width)]
+        
+        # Convert Gray code indices to binary and check if variable is constant
+        var_constant = True
+        first_value = None
+        for gray_index in group_range:
+            binary_value = gray_index_to_binary(gray_index, num_vars)
+            value = binary_value[var_idx]
+            if first_value is None:
+                first_value = value
+            elif first_value != value:
+                var_constant = False
+                break
+        
+        # If variable is constant, determine if it's 0 or 1 and add to terms
+        if var_constant:
+            if first_value == '1':
+                terms.append(var)
             else:
-                pass
-        else:
-            row_values.append(row_vars[i] + "'")
+                terms.append(f"{var}'")
 
-    col_values = []
-    for j in range(len(col_vars)):
-        if (col & (1 << j)) >> j == (width & (1 << j)) >> j:
-            if (col & (1 << j)) >> j == 1:
-                col_values.append(col_vars[j])
-            else:
-                pass
-        else:
-            col_values.append(col_vars[j] + "'")
-
-    if sop_or_pos == "sop":
-        return "".join(row_values + col_values)
-    elif sop_or_pos == "pos":
-        return "(" + " + ".join(row_values + col_values) + ")"
+    return ' & '.join(terms)
 
 def simplify_equation(equation, sop_or_pos):
     # print(equation)
@@ -185,7 +204,7 @@ def plot_kmap(kmap_matrix, row_labels, col_labels, vars, sop_or_pos):
                                edgecolor=color))
         
     # Define the equations for the groupings in legend corresponding to the colors
-    equations = [eq for eq in [get_equation(grouping, vars, sop_or_pos) for grouping in groupings]]
+    equations = [eq for eq in [get_equation(grouping, vars) for grouping in groupings]]
     # Plot the empty lines with corresponding colors and labels
     for i in range(len(groupings)):
         plt.plot([], [], color=colors[i % len(colors)], label=equations[i])
